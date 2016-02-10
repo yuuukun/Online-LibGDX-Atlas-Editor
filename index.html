@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8">
   <title>Online LibGDX Atlas Editor</title>
-  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
-  <script src="//code.jquery.com/jquery-1.12.0.js"></script>
-  <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+  <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="http://code.jquery.com/jquery-1.12.0.js"></script>
+  <script src="http://code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
   <style>
 	.box {
 		/* Cross transparent */
@@ -63,7 +65,7 @@
 
 			e.preventDefault();
 		});
-		
+				
 		$( '#imgfile' ).change(function ( e ) {
 			if(typeof e !== "undefined" && e.target.files.length > 0) {
 				$('#atlasfile').removeAttr('disabled');
@@ -91,11 +93,11 @@
 			
 			// Save header info for future use
 			atlasHeader = Array();
-			atlasHeader.push(ev.name + "\r\n");
-			atlasHeader.push("size: " + img.width + "," + img.height + "\r\n");
-			atlasHeader.push("format: RGBA8888" + "\r\n");
-			atlasHeader.push("filter: Nearest,Nearest" + "\r\n");
-			atlasHeader.push("repeat: none" + "\r\n");
+			atlasHeader.push(ev.name);
+			atlasHeader.push("size: " + img.width + "," + img.height);
+			atlasHeader.push("format: RGBA8888");
+			atlasHeader.push("filter: Nearest,Nearest");
+			atlasHeader.push("repeat: none");
 			
 			imageName = ev.name;
 		};
@@ -169,6 +171,11 @@
 		$('#tileSelectedName').val('');
 		$('#tileSelectedName').attr('disabled','disabled');
 		$('#delBtn').attr('disabled','disabled');
+		// Clear seleted tile fields
+		$('#tileSelectedId').html('&nbsp;');
+		$('#tileSelectedPos').html('&nbsp;');
+		$('#tileSelectedSize').html('&nbsp;');
+		$('#tileSelectedName').val('');
 	}
 	function enableTileControls() {
 		$('#tileSelectedName').removeAttr('disabled');
@@ -185,6 +192,9 @@
 		$('#addBtn').removeAttr('disabled');
 		$('#newTileWidth').removeAttr('disabled');
 		$('#newTileHeight').removeAttr('disabled');
+		var useGrid = ($('#atlasGrid').val() === "" || typeof $('#atlasGrid').val() === "undefined") ? 0 : $('#atlasGrid').val();
+		$('#newTileWidth').val(useGrid);
+		$('#newTileHeight').val(useGrid);
 	}
 	function makeDraggable() {
 		var useGrid = ($('#atlasGrid').val() === "" || typeof $('#atlasGrid').val() === "undefined") ? 0 : $('#atlasGrid').val();
@@ -245,7 +255,6 @@
 		newDiv = $(newDiv).uniqueId();
 		// Append new div to wrapper
 		$('#containment-wrapper').append(newDiv);
-		console.log(newDiv);
 		// Check if it has a name, if not create one with id
 		if (typeof tileName === "undefined" || tileName === "") {
 			$(newDiv).attr("tilename", $(newDiv).attr("id"));
@@ -264,26 +273,32 @@
 		}
 	}
 	function saveAtlas(){
-		var result = "";
-		// Get header info
-		if (atlasHeader.length > 0) {
-			for (i = 0; i < atlasHeader.length; i++) {
-				result += atlasHeader[i] + "\r\n";
+		var n = $( ".box" ).size();
+		if (n > 0) {
+			var result = "";
+			// Get header info
+			if (atlasHeader.length > 0) {
+				for (i = 0; i < atlasHeader.length; i++) {
+					result += atlasHeader[i] + "\r\n";
+				}
 			}
-		}
-		// Loop each div
-		$( '.box' ).each(function( index ) {
-			result += $(this).attr("tilename") + "\r\n";
-			result += "  rotate: false" + "\r\n";
-			result += "  xy: " + Math.round($(this).position().left) + ', ' + Math.round($(this).position().top) + "\r\n";
-			result += "  size: " + $(this).outerWidth() + ', ' + $(this).outerHeight() + "\r\n";
-			result += "  orig: " + $(this).outerWidth() + ', ' + $(this).outerHeight() + "\r\n";
-			result += "  offset: 0, 0" + "\r\n";
-			result += "  index: -1" + "\r\n";
-		});
+			// Loop each div
+			$( '.box' ).each(function( index ) {
+				result += $(this).attr("tilename") + "\r\n";
+				result += "  rotate: false" + "\r\n";
+				result += "  xy: " + Math.round($(this).position().left) + ', ' + Math.round($(this).position().top) + "\r\n";
+				result += "  size: " + $(this).outerWidth() + ', ' + $(this).outerHeight() + "\r\n";
+				result += "  orig: " + $(this).outerWidth() + ', ' + $(this).outerHeight() + "\r\n";
+				result += "  offset: 0, 0" + "\r\n";
+				result += "  index: -1" + "\r\n";
+			});
 
-		var fileName = (imageName.split('.')[0] !== "undefined" || imageName != "") ? imageName.split('.')[0] : "howyoudidthis";
-		downloadFile(fileName, result);
+			var fileName = (imageName.split('.')[0] !== "undefined" || imageName != "") ? imageName.split('.')[0] : "howyoudidthis";
+			downloadFile(fileName, result);
+		} else {
+			alert("You need at least one tile to save the file.");
+		}
+
 	}
 	function downloadFile(filename, text) {
 		var element = document.createElement('a');
@@ -300,37 +315,103 @@
   </script>
 </head>
 	<body>
-
-		<div id="loadAreaControls">
-			Load Area
-			<form>
-				<div>Image: <input id="imgfile" type="file" /></div>
-				<div>Atlas: <input id="atlasfile" type="file" /></div>
-				<div>Grid (Zero for no use): <input id="atlasGrid" type="text" value="16"></div>
-				<input type="submit">
-				<button id="saveBtn" type="button" onclick="saveAtlas()">Save Atlas</button>
-			</form>
-		</div>
-
-		<div id="containment-wrapper"></div>
-
-		<div id="newTileControls">
-			New Tile
-			<div>Width:<input id="newTileWidth" type="text"></div>
-			<div>Height:<input id="newTileHeight" type="text"></div>
-			<button id="addBtn" type="button" onclick="addNewTile()">Add tile</button>
-		</div>
-		
-		<div id="selectedTileControls" >
-			Selected Tile
-			<div>
-				<div>Id:<div id="tileSelectedId">&nbsp;</div></div>
-				<div>Position:<div id="tileSelectedPos">&nbsp;</div></div>
-				<div>Size:<div id="tileSelectedSize">&nbsp;</div></div>
-				<div>Name:<input id="tileSelectedName" type="text"></div>
+		<div class="container-fluid">
+			<div class="row" id="loadAreaControls">
+				<div class="col-md-8">
+					<h4>Load Area</h4>
+					<form class="form-horizontal">
+						<div class="form-group">
+							<label for="imgfile" class="col-sm-2 control-label"> Image: </label>
+							<div class="col-sm-10">
+								<input id="imgfile" type="file" class="form-control" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="atlasfile" class="col-sm-2 control-label"> Atlas: </label> 
+							<div class="col-sm-10">
+								<input id="atlasfile" type="file" class="form-control" />
+							</div>
+						</div>
+						<div class="form-group">
+							<label for="atlasGrid" class="col-sm-2 control-label"> Snap <abbr title="Set zero for no use">Grid</abbr>: </label> 
+							<div class="col-sm-10">
+								<input id="atlasGrid" type="text" value="16" class="form-control">
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<input type="submit" class="btn btn-default">
+								<button id="saveBtn" type="button" onclick="saveAtlas()" class="btn btn-success">Save Atlas</button>
+							</div>
+						</div>
+					</form>
+				</div>
 			</div>
-			<button id="delBtn" type="button" onclick="deleteTileMap()" >Delete!</button>
+
+			<div class="row" id="containment-wrapper"></div>
+
+			<div class="row">
+				<div id="newTileControls">
+					<div class="col-md-4">
+						<h4>New Tile</h4>
+						<div class="form-horizontal">
+							<div class="form-group">
+								<label for="newTileWidth" class="col-sm-2 control-label"> Width: </label> 
+								<div class="col-sm-10">
+									<input id="newTileWidth" type="text" class="form-control">
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="newTileHeight" class="col-sm-2 control-label"> Height: </label> 
+								<div class="col-sm-10">
+									<input id="newTileHeight" type="text" class="form-control">
+								</div>
+							</div>
+							<div class="form-group">
+								<div class="col-sm-offset-2 col-sm-10">
+									<button id="addBtn" type="button" onclick="addNewTile()" class="btn btn-primary">Add tile</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div id="selectedTileControls" >
+					<div class="col-md-4">
+						<h4>Selected Tile</h4>
+						<div class="form-horizontal">
+							<div class="form-group">
+								<label for="tileSelectedId" class="col-sm-2 control-label"> Id: </label> 
+								<div class="col-sm-10">
+									<div id="tileSelectedId" class="form-control">&nbsp;</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="tileSelectedPos" class="col-sm-2 control-label"> Position: </label> 
+								<div class="col-sm-10">
+									<div id="tileSelectedPos" class="form-control">&nbsp;</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="tileSelectedSize" class="col-sm-2 control-label"> Size: </label> 
+								<div class="col-sm-10">
+									<div id="tileSelectedSize" class="form-control">&nbsp;</div>
+								</div>
+							</div>
+							<div class="form-group">
+								<label for="tileSelectedName" class="col-sm-2 control-label"> Name: </label> 
+								<div class="col-sm-10">
+									<input id="tileSelectedName" type="text" class="form-control">
+								</div>
+							</div>
+							<div class="form-group">
+								<div class="col-sm-offset-2 col-sm-10">
+									<button id="delBtn" type="button" onclick="deleteTileMap()" class="btn btn-danger">Delete!</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
-		
 	</body>
 </html>
