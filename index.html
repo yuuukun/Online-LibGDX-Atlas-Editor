@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Online LibGDX Atlas Editor</title>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+  <script src="//code.jquery.com/jquery-1.12.0.js"></script>
+  <script src="//code.jquery.com/ui/1.11.4/jquery-ui.js"></script>
+  <style>
+	.box {
+		/* Cross transparent */
+		-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+		filter: alpha(opacity=50);
+		-moz-opacity: 0.5;
+		-khtml-opacity: 0.5;
+		opacity: 0.5;
+		/* Inner border */
+		box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		-webkit-box-sizing: border-box;
+		border: 2px solid red;
+	}
+	.selected {
+		border: 2px solid blue;
+	}
+	.draggable { padding: 0px; float: left; margin: 0px; }
+	#draggable { margin-bottom:20px; }
+	#draggable { cursor: n-resize; }
+	#containment-wrapper { position: relative; border:0px solid #ccc; padding: 0px; }
+	h3 { clear: left; }
+  </style>
+  <script>
+	// Global vars
+	var imageName = "";
+	var atlasHeader = Array();
+	var selectedTile = "";
+	
+	$(function() {
+		// Initially disable tile controls
+		disableTileControls();
+		// disable load atlas and add tile button
+		disableNewTileControls();
+		
+		$( 'form' ).submit(function ( e ) {
+			var imgFile = ($('#imgfile')[0].files[0] === "" || typeof $('#imgfile')[0].files[0] === "undefined") ? 0 : $('#imgfile')[0].files[0]
+			var atlasFile = ($('#atlasfile')[0].files[0] === "" || typeof $('#atlasfile')[0].files[0] === "undefined") ? 0 : $('#atlasfile')[0].files[0]
+			
+			if (imgFile != 0) {
+				loadImage (imgFile);
+				enableNewTileControls();
+			} else {
+				disableNewTileControls();
+			}
+			
+			if (atlasFile != 0) {
+				// Delete all atlas already loaded
+				$('.box').remove();
+				// Load
+				loadAtlas (atlasFile);
+			}
+			
+			makeDraggable();
+
+			e.preventDefault();
+		});
+		
+		$( '#imgfile' ).change(function ( e ) {
+			if(typeof e !== "undefined" && e.target.files.length > 0) {
+				$('#atlasfile').removeAttr('disabled');
+			} else {
+				$('#atlasfile').attr('disabled','disabled');
+			}
+		});
+		
+		$( '#tileSelectedName' ).change(function ( e ) {
+			updateTileMap();
+		});
+		
+	});
+	function loadImage (ev) {
+		var f = ev;
+		var fr = new FileReader();
+		
+		fr.onload = function() {
+			var img = new Image;
+			img.src = fr.result; 
+			// Set image as background-image and set div size
+			$('#containment-wrapper').css('background-image', 'url(' + fr.result + ')');
+			$('#containment-wrapper').width(img.width);
+			$('#containment-wrapper').height(img.height);
+			
+			// Save header info for future use
+			atlasHeader = Array();
+			atlasHeader.push(ev.name + "\r\n");
+			atlasHeader.push("size: " + img.width + "," + img.height + "\r\n");
+			atlasHeader.push("format: RGBA8888" + "\r\n");
+			atlasHeader.push("filter: Nearest,Nearest" + "\r\n");
+			atlasHeader.push("repeat: none" + "\r\n");
+			
+			imageName = ev.name;
+		};
+		
+		fr.readAsDataURL(f);
+	}
+	function loadAtlas (ev) {
+		var f = ev;
+		var fr = new FileReader();
+		
+		fr.onload = function() {
+			var myAtlass = fr.result;
+			var lines = myAtlass.split("\n");
+			var numLines = lines.length;
+			// Clean up for new header data
+			atlasHeader = Array();
+			// parse tiles
+			for (i = 0; i < numLines; i++) {
+				if (i < 5) {
+					// Save header info for future use
+					atlasHeader.push(strTrim(lines[i]));
+				} else {
+					// Create variables 
+					var tileName, tileRotate, tilePosition, tileSize, tileOrig, tileOffset, tileIndex;
+					
+					// Get tile name
+					tileName = lines[i].toString();
+
+					// Jump to next line to get attributes
+					while (true) {
+						i++;
+						if (typeof lines[i] !== "undefined") {
+							// Try set variables 
+							if (lines[i].indexOf('rotate:') != -1) {
+								tileRotate = lines[i];
+							} else if (lines[i].indexOf('xy:') != -1) {
+								tilePosition = lines[i].replace('xy:', '').split(',');
+							} else if (lines[i].indexOf('size:') != -1) {
+								tileSize = lines[i].replace('size:', '').split(',');
+							} else if (lines[i].indexOf('orig:') != -1) {
+								tileOrig = lines[i].replace('orig:', '').split(',');
+							} else if (lines[i].indexOf('offset:') != -1) {
+								tileOffset = lines[i].replace('offset:', '').split(',');
+							} else if (lines[i].indexOf('index:') != -1) {
+								tileIndex = lines[i].replace('index:', '');
+							} else {
+								// Go for next tile
+								i--;
+								break;
+							}
+						} else {
+							break;
+						}
+					}
+					// Create the Tile
+					if (typeof tileName !== "undefined" 
+						&& typeof tilePosition !== "undefined"
+						&& typeof tileSize !== "undefined") {
+						createTile(strTrim(tileSize[0]), strTrim(tileSize[1]), strTrim(tilePosition[1]), strTrim(tilePosition[0]), strTrim(tileName));
+					}
+				}
+			}
+		};
+		
+		fr.readAsText(f);
+	}
+	function strTrim(x) {
+		return x.replace(/^\s+|\s+$/gm,'');
+	}
+	function disableTileControls() {
+		$('#tileSelectedName').val('');
+		$('#tileSelectedName').attr('disabled','disabled');
+		$('#delBtn').attr('disabled','disabled');
+	}
+	function enableTileControls() {
+		$('#tileSelectedName').removeAttr('disabled');
+		$('#delBtn').removeAttr('disabled');
+	}
+	function disableNewTileControls() {
+		$('#atlasfile').attr('disabled','disabled');
+		$('#addBtn').attr('disabled','disabled');
+		$('#newTileWidth').attr('disabled','disabled');
+		$('#newTileHeight').attr('disabled','disabled');
+	}
+	function enableNewTileControls() {
+		$('#atlasfile').removeAttr('disabled');
+		$('#addBtn').removeAttr('disabled');
+		$('#newTileWidth').removeAttr('disabled');
+		$('#newTileHeight').removeAttr('disabled');
+	}
+	function makeDraggable() {
+		var useGrid = ($('#atlasGrid').val() === "" || typeof $('#atlasGrid').val() === "undefined") ? 0 : $('#atlasGrid').val();
+		makeDraggableGrid(useGrid);
+	}
+	function makeDraggableGrid(useGrid) {
+		if (useGrid != 0) {
+			$('.box').draggable({ 
+				containment: "#containment-wrapper", 
+				scroll: false, 
+				snap: true, 
+				snapTolerance: 1, 
+				grid: [ useGrid, useGrid ]
+			});
+		} else {
+			$('.box').draggable({ 
+				containment: "#containment-wrapper", 
+				scroll: false, 
+				snap: true, 
+				snapTolerance: 1,
+				grid: false
+			});
+		}
+		
+		$('.box').on('focusin', function() {
+			// Deselect current selected tile if any
+			if ( selectedTile != "" ) {
+				$("#"+selectedTile).removeClass("selected");
+			}
+			// Generate an unique Id if need
+			$(this).uniqueId();
+			// Mark tile as selected
+			selectedTile = $(this).attr("id");
+			// Check if it has a name, if not create one with id
+			if (typeof $(this).attr("tilename") === "undefined" || $(this).attr("tilename") === "") {
+				$(this).attr("tilename", selectedTile);
+			}
+			// Make it blue
+			$(this).addClass("selected");
+			// Get tile data and show on screen
+			$('#tileSelectedId').html(selectedTile);
+			$('#tileSelectedPos').html('x: ' + Math.round($(this).position().left) + ' y: ' + Math.round($(this).position().top));
+			$('#tileSelectedSize').html('w: ' + $(this).outerWidth() + ' h: ' + $(this).outerHeight());
+			$('#tileSelectedName').val($(this).attr("tilename"));
+			// Enable tile controls
+			enableTileControls();
+		});
+	}
+	function addNewTile(){
+		var newTileWidth = ($('#newTileWidth').val() === "") ? 16 : $('#newTileWidth').val();
+		var newTileHeight = ($('#newTileHeight').val() === "") ? 16 : $('#newTileHeight').val();
+		createTile(newTileWidth,newTileHeight,0,0,'');
+	}
+	function createTile(width, height, top, left, tileName){
+		console.log(width + '|' + height + '|' + top + '|' + left + '|' + tileName );
+		$('#containment-wrapper').append(
+			'<div style="position: absolute; ' + 
+				'width: ' + width + 'px; ' +
+				'height: ' + height + 'px; ' +
+				'top: ' + top + 'px; ' +
+				'left: ' + left + 'px;"' +
+				'tabindex="-1" class="draggable ui-widget-content box" ' + 
+				'tilename="' + tileName +'"></div>');
+		makeDraggable();
+	}
+	function deleteTileMap(){
+		if (selectedTile != "") {
+			$("#"+selectedTile).remove();
+			disableTileControls();
+		}
+	}
+	function updateTileMap(){
+		if (selectedTile != "") {
+			$("#"+selectedTile).attr( "tilename", $('#tileSelectedName').val() );
+		}
+	}
+	function saveAtlas(){
+		var result = "";
+		// Get header info
+		if (atlasHeader.length > 0) {
+			for (i = 0; i < atlasHeader.length; i++) {
+				result += atlasHeader[i] + "\r\n";
+			}
+		}
+		// Loop each div
+		$( '.box' ).each(function( index ) {
+			result += $(this).attr("tilename") + "\r\n";
+			result += "  rotate: false" + "\r\n";
+			result += "  xy: " + Math.round($(this).position().left) + ', ' + Math.round($(this).position().top) + "\r\n";
+			result += "  size: " + $(this).outerWidth() + ', ' + $(this).outerHeight() + "\r\n";
+			result += "  orig: " + $(this).outerWidth() + ', ' + $(this).outerHeight() + "\r\n";
+			result += "  offset: 0, 0" + "\r\n";
+			result += "  index: -1" + "\r\n";
+		});
+
+		var fileName = (imageName.split('.')[0] !== "undefined" || imageName != "") ? imageName.split('.')[0] : "howyoudidthis";
+		downloadFile(fileName, result);
+	}
+	function downloadFile(filename, text) {
+		var element = document.createElement('a');
+		element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+		element.setAttribute('download', filename);
+
+		element.style.display = 'none';
+		document.body.appendChild(element);
+
+		element.click();
+
+		document.body.removeChild(element);
+	}
+  </script>
+</head>
+	<body>
+
+		<div id="loadAreaControls">
+			Load Area
+			<form>
+				<div>Image: <input id="imgfile" type="file" /></div>
+				<div>Atlas: <input id="atlasfile" type="file" /></div>
+				<div>Grid (Zero for no use): <input id="atlasGrid" type="text" value="16"></div>
+				<input type="submit">
+				<button id="saveBtn" type="button" onclick="saveAtlas()">Save Atlas</button>
+			</form>
+		</div>
+
+		<div id="containment-wrapper"></div>
+
+		<div id="newTileControls">
+			New Tile
+			<div>Width:<input id="newTileWidth" type="text"></div>
+			<div>Height:<input id="newTileHeight" type="text"></div>
+			<button id="addBtn" type="button" onclick="addNewTile()">Add tile</button>
+		</div>
+		
+		<div id="selectedTileControls" >
+			Selected Tile
+			<div>
+				<div>Id:<div id="tileSelectedId">&nbsp;</div></div>
+				<div>Position:<div id="tileSelectedPos">&nbsp;</div></div>
+				<div>Size:<div id="tileSelectedSize">&nbsp;</div></div>
+				<div>Name:<input id="tileSelectedName" type="text"></div>
+			</div>
+			<button id="delBtn" type="button" onclick="deleteTileMap()" >Delete!</button>
+		</div>
+		
+	</body>
+</html>
