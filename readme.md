@@ -16,7 +16,7 @@ Everything is made saving and caching in your own web browser nothing is stored 
 
 ### Development
 Want to contribute?  
-I've made this for my own use, and I didn't care about layout and some Atlas functionalities that I wasn't using.  
+I've made this for my own use, and I didn't care about layout and some Atlas functionalities that I wasn't using
 If you see something you can add, change, improve some existing functionality or anything, would be great.
 
 
