@@ -214,14 +214,8 @@
 			if ( selectedTile != "" ) {
 				$("#"+selectedTile).removeClass("selected");
 			}
-			// Generate an unique Id if need
-			$(this).uniqueId();
 			// Mark tile as selected
 			selectedTile = $(this).attr("id");
-			// Check if it has a name, if not create one with id
-			if (typeof $(this).attr("tilename") === "undefined" || $(this).attr("tilename") === "") {
-				$(this).attr("tilename", selectedTile);
-			}
 			// Make it blue
 			$(this).addClass("selected");
 			// Get tile data and show on screen
@@ -240,14 +234,22 @@
 	}
 	function createTile(width, height, top, left, tileName){
 		console.log(width + '|' + height + '|' + top + '|' + left + '|' + tileName );
-		$('#containment-wrapper').append(
-			'<div style="position: absolute; ' + 
-				'width: ' + width + 'px; ' +
-				'height: ' + height + 'px; ' +
-				'top: ' + top + 'px; ' +
-				'left: ' + left + 'px;"' +
-				'tabindex="-1" class="draggable ui-widget-content box" ' + 
-				'tilename="' + tileName +'"></div>');
+		var newDiv = '<div style="position: absolute; ' + 
+			'width: ' + width + 'px; ' +
+			'height: ' + height + 'px; ' +
+			'top: ' + top + 'px; ' +
+			'left: ' + left + 'px;"' +
+			'tabindex="-1" class="draggable ui-widget-content box" ' + 
+			'tilename="' + tileName +'"></div>';
+		// Create a UniqueID for this div
+		newDiv = $(newDiv).uniqueId();
+		// Append new div to wrapper
+		$('#containment-wrapper').append(newDiv);
+		console.log(newDiv);
+		// Check if it has a name, if not create one with id
+		if (typeof tileName === "undefined" || tileName === "") {
+			$(newDiv).attr("tilename", $(newDiv).attr("id"));
+		}
 		makeDraggable();
 	}
 	function deleteTileMap(){
