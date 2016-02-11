@@ -14,6 +14,7 @@ You can use the online version [Here].
 
 * [JQuery] - jQuery is a fast, small, and feature-rich JavaScript library.  
 * [JQuery UI] - jQuery UI is a curated set of user interface interactions, effects, widgets, and themes built on top of the jQuery JavaScript Library.
+* [MouseTrap] - Simple library for handling keyboard shortcuts in Javascript.
 
 ### Development
 Want to contribute?  
@@ -34,4 +35,5 @@ MIT
 
 [jQuery]: <http://jquery.com>
 [jQuery UI]: <http://jqueryui.com/>
+[MouseTrap]: <https://github.com/ccampbell/mousetrap>
 [Here]: <http://rafaeldelboni.github.io/Online-LibGDX-Atlas-Editor/>
