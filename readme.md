@@ -4,14 +4,14 @@ Online Atlas Editor is a very simple Online Atlas Editor for editing LibGDX Atla
 
   - Load you SpriteSheet
   - Load your Atlas file
-  - Add/Edit/Remove the frames 
+  - Add/Edit/Remove the tiles
+  - Drag & Drop tiles for new positions
   - Save a new Atlas file with the changes 
-
+  
+You can use the online version [Here]. 
 Everything is made saving and caching in your own web browser nothing is stored in the server side.  
-You can use the online version [Here].  
 
 ### Tech
-
 * [JQuery] - jQuery is a fast, small, and feature-rich JavaScript library.  
 * [JQuery UI] - jQuery UI is a curated set of user interface interactions, effects, widgets, and themes built on top of the jQuery JavaScript Library.
 * [MouseTrap] - Simple library for handling keyboard shortcuts in Javascript.
