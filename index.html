@@ -240,8 +240,8 @@
 			$(this).addClass("selected");
 			// Get tile data and show on screen
 			$('#tileSelectedId').html(selectedTile);
-			$('#tileSelectedPos').html('x: ' + Math.round($(this).position().left) + ' y: ' + Math.round($(this).position().top));
-			$('#tileSelectedSize').html('w: ' + $(this).outerWidth() + ' h: ' + $(this).outerHeight());
+			$('#tileSelectedPos').html('x: ' + rondelyNumber($(this).position().left) + ' y: ' + rondelyNumber($(this).position().top));
+			$('#tileSelectedSize').html('w: ' + rondelyNumber($(this).outerWidth()) + ' h: ' + rondelyNumber($(this).position().top));
 			$('#tileSelectedName').val($(this).attr("tilename"));
 			// Enable tile controls
 			enableTileControls();
@@ -253,12 +253,11 @@
 		createTile(newTileWidth,newTileHeight,0,0,'');
 	}
 	function createTile(width, height, top, left, tileName){
-		console.log(width + '|' + height + '|' + top + '|' + left + '|' + tileName );
 		var newDiv = '<div style="position: absolute; ' + 
-			'width: ' + width + 'px; ' +
-			'height: ' + height + 'px; ' +
-			'top: ' + top + 'px; ' +
-			'left: ' + left + 'px;"' +
+			'width: ' + rondelyNumber(width) + 'px; ' +
+			'height: ' + rondelyNumber(height) + 'px; ' +
+			'top: ' + rondelyNumber(top) + 'px; ' +
+			'left: ' + rondelyNumber(left) + 'px;"' +
 			'tabindex="-1" class="draggable ui-widget-content box" ' + 
 			'tilename="' + tileName +'"></div>';
 		// Create a UniqueID for this div
@@ -313,9 +312,9 @@
 			.each(function( index ) {
 				result += $(this).attr("tilename") + "\r\n";
 				result += "  rotate: false" + "\r\n";
-				result += "  xy: " + Math.round($(this).position().left) + ', ' + Math.round($(this).position().top) + "\r\n";
-				result += "  size: " + $(this).outerWidth() + ', ' + $(this).outerHeight() + "\r\n";
-				result += "  orig: " + $(this).outerWidth() + ', ' + $(this).outerHeight() + "\r\n";
+				result += "  xy: " + rondelyNumber($(this).position().left) + ', ' + rondelyNumber($(this).position().top) + "\r\n";
+				result += "  size: " + rondelyNumber($(this).outerWidth()) + ', ' + rondelyNumber($(this).outerHeight()) + "\r\n";
+				result += "  orig: " + rondelyNumber($(this).outerWidth()) + ', ' + rondelyNumber($(this).outerHeight()) + "\r\n";
 				result += "  offset: 0, 0" + "\r\n";
 				result += "  index: -1" + "\r\n";
 			});
@@ -339,6 +338,11 @@
 
 		document.body.removeChild(element);
 	}
+	
+	function rondelyNumber(n) {
+		return Math.round(n*100)/100;
+	}
+
   </script>
 </head>
 	<body>
